@@ -1,0 +1,43 @@
+name: Build APK
+
+# בונה APK אוטומטית בכל פוש ל-main, וגם ידנית מהטאב Actions ("Run workflow").
+# לאחר סיום הריצה - היכנסו ל-Actions -> הריצה האחרונה -> Artifacts -> makeup-calendar-apk
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze (non-blocking)
+        run: flutter analyze || true
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: makeup-calendar-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
